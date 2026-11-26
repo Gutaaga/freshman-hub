@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Target Freshman Hub - Runner</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1, h2 { color: #1e3a8a; }
+    .mode-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+    button { background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #1d4ed8; }
+    .secondary-btn { background: #64748b; }
+    .secondary-btn:hover { background: #475569; }
+    .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+    .hint-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 10px; display: none; }
+    .solution-box { background: #dcfce7; border-left: 4px solid #22c55e; padding: 10px; margin-top: 10px; display: none; }
+    input[type="text"] { width: 90%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 8px; }
+    .score-badge { font-size: 1.1rem; font-weight: bold; color: #047857; margin-top: 15px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Target Freshman Hub</h1>
+  <div class="mode-bar">
+    <button onclick="setMode('guided')">Guided Learning Mode</button>
+    <button onclick="setMode('exam')">Exam Simulation Mode</button>
+  </div>
+
+  <div id="level-header"></div>
+  <div id="quiz-area"></div>
+  <button id="submit-btn" style="display:none;" onclick="evaluateLevel()">Submit Level</button>
+  <div id="result-area"></div>
+</div>
+
+<script>
+let questions = [];
+let currentLevel = 0;
+let mode = 'guided'; // 'guided' or 'exam'
+const QUESTIONS_PER_LEVEL = 5;
+
+// Paste your entire JSON array directly here:
+questions = [
+  {
+    "id": 1,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Cross Product and Orthogonality",
+    "type": "fill_blank",
+    "question": "For any two vectors u and v in R^3, a vector orthogonal to both u and v is ____________________.",
+    "options": null,
+    "correct_answer": "u x v",
+    "given": "Two vectors u and v in R^3",
+    "required": "A vector orthogonal to both u and v",
+    "formula": "u x v",
+    "solution_steps": [
+      "Recall that the cross product of two 3-dimensional vectors produces a vector perpendicular to both original vectors.",
+      "By definition and properties of the vector cross product, (u x v) . u = 0 and (u x v) . v = 0.",
+      "Therefore, u x v (or any scalar multiple c(u x v)) is orthogonal to both u and v."
+    ],
+    "hints": [
+      "Think about the vector operation unique to three dimensions.",
+      "Consider the cross product of the two vectors.",
+      "Evaluate the dot product of u x v with u and v."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 1.4, Theorem 1.4.1(6), Page 17"
+  },
+  {
+    "id": 2,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Vector Projection",
+    "type": "fill_blank",
+    "question": "For two orthogonal vectors u and v in R^3, Proj_v(u) = ____________________.",
+    "options": null,
+    "correct_answer": "0",
+    "given": "u and v are orthogonal vectors in R^3 (u . v = 0)",
+    "required": "Proj_v(u)",
+    "formula": "Proj_v(u) = ((u . v) / ||v||^2) * v",
+    "solution_steps": [
+      "Recall the formula for vector projection: Proj_v(u) = ((u . v) / ||v||^2) * v.",
+      "Since u and v are orthogonal, their dot product u . v = 0.",
+      "Substitute 0 into the projection formula: Proj_v(u) = (0 / ||v||^2) * v = 0 (the zero vector)."
+    ],
+    "hints": [
+      "Recall the formula for the projection of one vector onto another.",
+      "What is the scalar product of two orthogonal vectors?",
+      "Substitute u . v = 0 into the projection formula."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 1.3, Page 14"
+  },
+  {
+    "id": 3,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Dot Product and Linear Combinations",
+    "type": "short_answer",
+    "question": "If A = (1, -2, 3) and B = (3, 1, 2) are vectors in R^3, find scalars x and y such that C = xA + yB is a non-zero vector with C . B = 0.",
+    "options": null,
+    "correct_answer": "x = -2y with y != 0 (e.g., x = -2, y = 1)",
+    "given": "A = (1, -2, 3), B = (3, 1, 2), C = xA + yB != 0, C . B = 0",
+    "required": "Scalars x and y",
+    "formula": "C . B = x(A . B) + y(B . B) = 0",
+    "solution_steps": [
+      "Calculate A . B = (1)(3) + (-2)(1) + (3)(2) = 3 - 2 + 6 = 7.",
+      "Calculate B . B = 3^2 + 1^2 + 2^2 = 9 + 1 + 4 = 14.",
+      "Set up the orthogonality equation: C . B = (xA + yB) . B = 7x + 14y = 0.",
+      "Solve for x: x = -2y.",
+      "For C to be non-zero, choose any y != 0; choosing y = 1 gives x = -2."
+    ],
+    "hints": [
+      "Expand C . B using the linearity of the dot product.",
+      "Calculate A . B and B . B numerically.",
+      "Express x in terms of y."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 1.3, Page 6"
+  },
+  {
+    "id": 4,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Orthogonality and Norms",
+    "type": "numerical",
+    "question": "Let v and w be orthogonal vectors in R^n such that ||v|| = 3 and ||w|| = 5. If the vectors (xv + w) and (xv - 3w) are also orthogonal, determine all possible values of x.",
+    "options": null,
+    "correct_answer": "+- (5*sqrt(3))/3",
+    "given": "v . w = 0, ||v|| = 3, ||w|| = 5, (xv + w) . (xv - 3w) = 0",
+    "required": "Values of x",
+    "formula": "(xv + w) . (xv - 3w) = x^2||v||^2 - 2x(v . w) - 3||w||^2 = 0",
+    "solution_steps": [
+      "Expand the dot product: (xv + w) . (xv - 3w) = x^2(v . v) - 3x(v . w) + x(w . v) - 3(w . w) = 0.",
+      "Use v . w = 0 to get x^2||v||^2 - 3||w||^2 = 0.",
+      "Substitute ||v|| = 3 and ||w|| = 5: x^2(9) - 3(25) = 0 => 9x^2 = 75.",
+      "Solve for x^2: x^2 = 75/9 = 25/3.",
+      "Take the square root: x = +- 5/sqrt(3) = +- (5*sqrt(3))/3."
+    ],
+    "hints": [
+      "Expand the dot product of the two linear combinations.",
+      "Substitute the given norm values and orthogonality condition v . w = 0.",
+      "Solve the resulting quadratic equation for x."
+    ],
+    "answer_unit": null,
+    "tolerance": 0.01,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 1.3, Page 7"
+  },
+  {
+    "id": 5,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Parallel Vectors",
+    "type": "true_false",
+    "question": "The vectors v1 = -6i + 3j - 9k and v2 = -3i + j + 3k are parallel.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "correct_answer": "False",
+    "given": "v1 = (-6, 3, -9) and v2 = (-3, 1, 3)",
+    "required": "Determine whether v1 and v2 are parallel (True/False)",
+    "formula": "v1 = c * v2",
+    "solution_steps": [
+      "Two vectors are parallel if and only if there exists a scalar c such that v1 = c * v2.",
+      "Compare the ratios of corresponding components: -6/(-3) = 2, 3/1 = 2, but -9/3 = -3.",
+      "Since the component ratios are not all equal (2 != -3), no scalar c exists.",
+      "Therefore, the vectors are not parallel."
+    ],
+    "hints": [
+      "Recall the condition for two vectors to be parallel in R^3.",
+      "Check the ratios of the x, y, and z components.",
+      "Do all components share the exact same proportionality factor?"
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 1.2, Definition 1.2.3, Page 5"
+  },
+  {
+    "id": 6,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Unit Vectors",
+    "type": "short_answer",
+    "question": "A unit vector v in the opposite direction of u = 2i + 3j - k is ____________________.",
+    "options": null,
+    "correct_answer": "-(2/sqrt(14))i - (3/sqrt(14))j + (1/sqrt(14))k",
+    "given": "u = 2i + 3j - k",
+    "required": "Unit vector in the opposite direction of u",
+    "formula": "v = -u / ||u||",
+    "solution_steps": [
+      "Compute the norm of u: ||u|| = sqrt(2^2 + 3^2 + (-1)^2) = sqrt(4 + 9 + 1) = sqrt(14).",
+      "The unit vector in the opposite direction is given by v = -u / ||u||.",
+      "Multiply each component by -1/sqrt(14): v = -(2/sqrt(14))i - (3/sqrt(14))j + (1/sqrt(14))k."
+    ],
+    "hints": [
+      "Find the length (norm) of vector u first.",
+      "Opposite direction means multiplying the normalized vector by -1.",
+      "Divide each component of -u by ||u||."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 1.3, Definition 1.3.4 & Example 1.3.5, Page 9"
+  },
+  {
+    "id": 7,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Vector Operations, Projection, and Cross Product",
+    "type": "multi_step",
+    "question": "Let a = i + 2j - 3k and b = -4i + j + k be vectors in space. Find: (a) 5a - b, (b) Proj_a(b), (c) a x b, and (d) a unit vector perpendicular to both a and b.",
+    "options": null,
+    "correct_answer": "(a) 9i + 9j - 16k; (b) (-5/14)i - (5/7)j + (15/14)k; (c) 5i + 11j + 9k; (d) +-(5i + 11j + 9k)/sqrt(227)",
+    "given": "a = (1, 2, -3), b = (-4, 1, 1)",
+    "required": "5a - b, Proj_a(b), a x b, and unit vector perpendicular to both a and b",
+    "formula": "Proj_a(b) = ((b . a)/||a||^2)a, a x b = det([i, j, k; a1, a2, a3; b1, b2, b3])",
+    "solution_steps": [
+      "(a) 5a - b = 5(1, 2, -3) - (-4, 1, 1) = (5 - (-4), 10 - 1, -15 - 1) = (9, 9, -16) = 9i + 9j - 16k.",
+      "(b) b . a = (-4)(1) + (1)(2) + (1)(-3) = -5. ||a||^2 = 1^2 + 2^2 + (-3)^2 = 14. Proj_a(b) = (-5/14)(i + 2j - 3k) = (-5/14)i - (5/7)j + (15/14)k.",
+      "(c) a x b = i(2(1) - (-3)(1)) - j(1(1) - (-3)(-4)) + k(1(1) - 2(-4)) = 5i + 11j + 9k.",
+      "(d) ||a x b|| = sqrt(5^2 + 11^2 + 9^2) = sqrt(25 + 121 + 81) = sqrt(227). Unit vector = +-(5i + 11j + 9k)/sqrt(227)."
+    ],
+    "hints": [
+      "For (a), multiply vector a by scalar 5 and subtract b component-wise.",
+      "For (b), calculate the dot product b . a and the magnitude squared of a.",
+      "For (c), set up a 3x3 determinant with i, j, k in the top row.",
+      "For (d), divide the cross product vector by its norm."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 1.3–1.4, Pages 6–16"
+  },
+  {
+    "id": 8,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Revision on Integration",
+    "topic": "Computing Work Done by Force",
+    "type": "numerical",
+    "question": "Suppose a force is given by the vector F = 2i + 3j + 4k and moves a particle from the point A(1, 2, 1) to the point B(5, 7, 2). The work done by the force is ____________________.",
+    "options": null,
+    "correct_answer": "27",
+    "given": "F = (2, 3, 4), A = (1, 2, 1), B = (5, 7, 2)",
+    "required": "Work done W = F . S",
+    "formula": "W = F . S, S = AB = B - A",
+    "solution_steps": [
+      "Find displacement vector S = B - A = (5 - 1, 7 - 2, 2 - 1) = (4, 5, 1) = 4i + 5j + k.",
+      "Calculate work W = F . S = (2)(4) + (3)(5) + (4)(1).",
+      "W = 8 + 15 + 4 = 27."
+    ],
+    "hints": [
+      "First determine the displacement vector S from point A to point B.",
+      "Compute the dot product between the force vector F and displacement vector S."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 4.3, Page 247"
+  },
+  {
+    "id": 9,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Direction Cosines",
+    "type": "short_answer",
+    "question": "If A = 3i - j + 5k and B = i + j - k, then find the three direction cosines of A - B.",
+    "options": null,
+    "correct_answer": "1/sqrt(11), -1/sqrt(11), 3/sqrt(11)",
+    "given": "A = (3, -1, 5), B = (1, 1, -1)",
+    "required": "The three direction cosines of V = A - B",
+    "formula": "cos(alpha) = v1/||V||, cos(beta) = v2/||V||, cos(gamma) = v3/||V||",
+    "solution_steps": [
+      "Find V = A - B = (3 - 1)i + (-1 - 1)j + (5 - (-1))k = 2i - 2j + 6k.",
+      "Compute ||V|| = sqrt(2^2 + (-2)^2 + 6^2) = sqrt(4 + 4 + 36) = sqrt(44) = 2*sqrt(11).",
+      "Calculate cos(alpha) = 2 / (2*sqrt(11)) = 1/sqrt(11).",
+      "Calculate cos(beta) = -2 / (2*sqrt(11)) = -1/sqrt(11).",
+      "Calculate cos(gamma) = 6 / (2*sqrt(11)) = 3/sqrt(11)."
+    ],
+    "hints": [
+      "Subtract vector B from vector A component-wise.",
+      "Find the Euclidean norm of vector A - B.",
+      "Divide each component by the norm."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 1.3, Pages 12–13"
+  },
+  {
+    "id": 10,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Area of a Triangle Using Cross Product",
+    "type": "numerical",
+    "question": "The area of the triangle whose vertices are (1, -1, 2), (3, 1, -1), and (0, 2, 1) is ____________________ square units.",
+    "options": null,
+    "correct_answer": "sqrt(138)/2",
+    "given": "Vertices P(1, -1, 2), Q(3, 1, -1), R(0, 2, 1)",
+    "required": "Area of triangle PQR",
+    "formula": "Area = (1/2) * ||PQ x PR||",
+    "solution_steps": [
+      "Form vector PQ = Q - P = (3 - 1, 1 - (-1), -1 - 2) = (2, 2, -3).",
+      "Form vector PR = R - P = (0 - 1, 2 - (-1), 1 - 2) = (-1, 3, -1).",
+      "Compute PQ x PR = i(2(-1) - (-3)(3)) - j(2(-1) - (-3)(-1)) + k(2(3) - 2(-1)) = 7i + 5j + 8k.",
+      "Compute magnitude: ||PQ x PR|| = sqrt(7^2 + 5^2 + 8^2) = sqrt(49 + 25 + 64) = sqrt(138).",
+      "Area = (1/2) * sqrt(138) = sqrt(138)/2."
+    ],
+    "hints": [
+      "Form two displacement vectors originating from the same vertex.",
+      "Take the cross product of these two vectors.",
+      "The area is half the magnitude of the cross product."
+    ],
+    "answer_unit": "square units",
+    "tolerance": 0.01,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 1.6, Page 24"
+  },
+  {
+    "id": 11,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Lines in Space",
+    "type": "short_answer",
+    "question": "The parametric equation of the line through the point (1, -1, 1) and orthogonal to the plane pi: x + 2y - 3z = 6 is ____________________.",
+    "options": null,
+    "correct_answer": "x = 1 + t, y = -1 + 2t, z = 1 - 3t",
+    "given": "Point P0 = (1, -1, 1), Plane pi: x + 2y - 3z = 6",
+    "required": "Parametric equations of the line",
+    "formula": "x = x0 + at, y = y0 + bt, z = z0 + ct",
+    "solution_steps": [
+      "Identify the normal vector to the plane pi: N = (1, 2, -3).",
+      "Since the line is orthogonal to the plane, its direction vector L is parallel to N, so L = (1, 2, -3).",
+      "Use point-direction form with (x0, y0, z0) = (1, -1, 1): x = 1 + t, y = -1 + 2t, z = 1 - 3t, where t in R."
+    ],
+    "hints": [
+      "What is the normal vector to the plane Ax + By + Cz = D?",
+      "How is the line's direction vector related to the plane's normal vector?",
+      "Write down the parametric form using the initial point."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 1.5, Pages 18–19"
+  },
+  {
+    "id": 12,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Planes in Space",
+    "type": "short_answer",
+    "question": "The equation of the plane containing the point P = (5, 3, 1) and the line l: (3, 0, 3) + t(2, 0, -1) is ____________________.",
+    "options": null,
+    "correct_answer": "3x + 2y + 6z = 27",
+    "given": "Point P = (5, 3, 1), line l passes through Q(3, 0, 3) with direction d = (2, 0, -1)",
+    "required": "Equation of the plane",
+    "formula": "N . (r - r0) = 0, where N = d x QP",
+    "solution_steps": [
+      "Identify point Q(3, 0, 3) on line l and direction vector d = (2, 0, -1).",
+      "Compute vector QP = P - Q = (5 - 3, 3 - 0, 1 - 3) = (2, 3, -2).",
+      "Find the normal vector N = d x QP = det([i, j, k; 2, 0, -1; 2, 3, -2]) = 3i + 2j + 6k.",
+      "Write the equation: 3(x - 3) + 2(y - 0) + 6(z - 3) = 0 => 3x + 2y + 6z - 27 = 0.",
+      "Rearrange: 3x + 2y + 6z = 27."
+    ],
+    "hints": [
+      "Find a vector between the given point and a point on the line.",
+      "Take the cross product of that vector with the line's direction vector.",
+      "Use the resulting normal vector and a known point to write the plane equation."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 1.5, Pages 21–22"
+  },
+  {
+    "id": 13,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Lines in Space: Parallel and Distance",
+    "type": "multi_step",
+    "question": "Let l1: x = 4 - 2t, y = -5 + 3t, 2z = -4 - 3t and l2: 3x = 18 + 8s, y = -7 - 4s, z = 1 + 2s represent equations of lines in R^3. Determine whether l1 and l2 are intersecting or parallel or skew. Moreover find the intersecting point if intersecting, and the distance between them if parallel.",
+    "options": null,
+    "correct_answer": "The lines are parallel; the distance between them is 14/sqrt(61)",
+    "given": "l1: (x, y, z) = (4 - 2t, -5 + 3t, -2 - 1.5t), l2: (x, y, z) = (6 + (8/3)s, -7 - 4s, 1 + 2s)",
+    "required": "Relationship between lines (intersecting/parallel/skew) and distance if parallel",
+    "formula": "D = ||P1P2 x d|| / ||d||",
+    "solution_steps": [
+      "Direction of l1 is d1 = (-2, 3, -1.5). Scale to whole numbers: v = (-4, 6, -3).",
+      "Direction of l2 is d2 = (8/3, -4, 2). Scale by 3/2: (4, -6, 3) = -v. Since directions are proportional, the lines are parallel.",
+      "Choose point P1(4, -5, -2) on l1 and P2(6, -7, 1) on l2. Vector P1P2 = (2, -2, 3).",
+      "Compute P1P2 x v = det([i, j, k; 2, -2, 3; -4, 6, -3]) = -12i - 6j + 4k.",
+      "Compute magnitude: ||P1P2 x v|| = sqrt((-12)^2 + (-6)^2 + 4^2) = sqrt(144 + 36 + 16) = sqrt(196) = 14.",
+      "Compute ||v|| = sqrt((-4)^2 + 6^2 + (-3)^2) = sqrt(16 + 36 + 9) = sqrt(61).",
+      "Distance D = 14 / sqrt(61)."
+    ],
+    "hints": [
+      "First extract the direction vectors of both lines and compare them.",
+      "Notice that the direction vectors are parallel.",
+      "Use the point-to-line distance formula to calculate the distance."
+    ],
+    "answer_unit": null,
+    "tolerance": 0.01,
+    "diagram_reference": null,
+    "difficulty": "hard",
+    "citation": "AAU Math 1041 Module, Section 1.5, Theorem 1.5.1, Page 20"
+  },
+  {
+    "id": 14,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Subspaces of Vector Spaces",
+    "type": "proof",
+    "question": "Show that W = {(x, y, z) in R^3 | x = y and 2y = z} is a subspace of R^3.",
+    "options": null,
+    "correct_answer": "W is a subspace of R^3",
+    "given": "W = {(x, y, z) in R^3 | x = y, z = 2y}",
+    "required": "Prove W satisfies the subspace axioms",
+    "formula": "1. 0 in W; 2. u + v in W; 3. c*u in W",
+    "solution_steps": [
+      "Zero vector: (0, 0, 0) satisfies 0 = 0 and 2(0) = 0, so 0 in W.",
+      "Closure under addition: Let u = (x1, y1, z1) in W and v = (x2, y2, z2) in W. Then x1 = y1, z1 = 2y1 and x2 = y2, z2 = 2y2. In u + v = (x1+x2, y1+y2, z1+z2), x1+x2 = y1+y2 and z1+z2 = 2y1+2y2 = 2(y1+y2). Thus u + v in W.",
+      "Closure under scalar multiplication: For alpha in R, alpha*u = (alpha*x1, alpha*y1, alpha*z1). Since alpha*x1 = alpha*y1 and alpha*z1 = 2(alpha*y1), alpha*u in W.",
+      "Since W contains the zero vector and is closed under addition and scalar multiplication, W is a subspace of R^3."
+    ],
+    "hints": [
+      "Check if the origin (0, 0, 0) belongs to W.",
+      "Take two generic vectors in W and check if their sum satisfies the condition.",
+      "Multiply a generic vector in W by a scalar and verify the condition holds."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 4.2, Example 4.4.13, Pages 30–31, 53"
+  },
+  {
+    "id": 15,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Fields and Vector Space Axioms",
+    "type": "true_false",
+    "question": "The set of integers is a field under the usual operation addition and multiplication (T/F).",
+    "options": [
+      "True",
+      "False"
+    ],
+    "correct_answer": "False",
+    "given": "The set of integers Z with usual addition and multiplication",
+    "required": "Determine if Z is a field",
+    "formula": "Multiplicative inverse axiom: for all a != 0, there exists a^-1 such that a * a^-1 = 1",
+    "solution_steps": [
+      "Recall the definition of a field: every non-zero element must have a multiplicative inverse in the set.",
+      "In Z, consider the integer 2 != 0. Its multiplicative inverse is 1/2.",
+      "Since 1/2 is not an integer, Z does not contain multiplicative inverses for all non-zero elements.",
+      "Hence, Z is not a field (it is an integral domain)."
+    ],
+    "hints": [
+      "Recall the required axioms for an algebraic structure to be a field.",
+      "What is the multiplicative inverse of the integer 2?",
+      "Does that inverse belong to the set of integers?"
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 4.1, Definition 4.1.1, Page 27"
+  },
+  {
+    "id": 16,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Linear Dependence of Polynomials",
+    "type": "short_answer",
+    "question": "Let p(x) = x^2 + 2x - 3, q(x) = 2x^2 - 3x + 4, and r(x) = ax^2 - 1. The set {p, q, r} is linearly dependent if a = ____________________.",
+    "options": null,
+    "correct_answer": "7",
+    "given": "p(x) = x^2 + 2x - 3, q(x) = 2x^2 - 3x + 4, r(x) = ax^2 - 1",
+    "required": "Value of a for linear dependence",
+    "formula": "det([1, 2, a; 2, -3, 0; -3, 4, -1]) = 0",
+    "solution_steps": [
+      "Represent the polynomials with coordinate vectors relative to the standard basis {x^2, x, 1}: [p] = (1, 2, -3)^t, [q] = (2, -3, 4)^t, [r] = (a, 0, -1)^t.",
+      "The set is linearly dependent if and only if the determinant of the 3x3 matrix is zero:",
+      "det([1, 2, a; 2, -3, 0; -3, 4, -1]) = 0.",
+      "Expand along the third column: a*(2(4) - (-3)(-3)) - 0 - 1*(1(-3) - 2(2)) = 0.",
+      "a*(8 - 9) - 1*(-3 - 4) = 0 => -a + 7 = 0 => a = 7."
+    ],
+    "hints": [
+      "Write the coordinate vectors of the polynomials with respect to {x^2, x, 1}.",
+      "Construct a 3x3 matrix and compute its determinant.",
+      "Set the determinant to zero and solve for a."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 4.3, Example 4.3.6, Page 45–46"
+  },
+  {
+    "id": 17,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Linear Dependence in R^3",
+    "type": "short_answer",
+    "question": "The possible value(s) of alpha, where the vectors u1 = (alpha, 0, 1), u2 = (1, 1, alpha), and u3 = (1, 2, alpha) are linearly dependent in R^3 is (are) ____________________.",
+    "options": null,
+    "correct_answer": "1, -1",
+    "given": "u1 = (alpha, 0, 1), u2 = (1, 1, alpha), u3 = (1, 2, alpha)",
+    "required": "Possible values of alpha",
+    "formula": "det([alpha, 0, 1; 1, 1, alpha; 1, 2, alpha]) = 0",
+    "solution_steps": [
+      "Form the matrix whose rows (or columns) are u1, u2, u3.",
+      "Compute determinant: det = alpha*(alpha - 2*alpha) - 0 + 1*(2 - 1).",
+      "det = alpha*(-alpha) + 1 = -alpha^2 + 1.",
+      "Set determinant to zero for linear dependence: 1 - alpha^2 = 0 => alpha^2 = 1.",
+      "Therefore, alpha = 1 or alpha = -1."
+    ],
+    "hints": [
+      "Recall that three vectors in R^3 are linearly dependent if and only if their determinant is zero.",
+      "Set up the 3x3 determinant and expand along the first row.",
+      "Solve the resulting equation for alpha."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 4.3, Page 43–44"
+  },
+  {
+    "id": 18,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Linear Independence of Polynomials",
+    "type": "proof",
+    "question": "Show that the set of polynomials {x^4, x^4 + x^3, x^4 + x^3 + x^2} is linearly independent.",
+    "options": null,
+    "correct_answer": "The set is linearly independent",
+    "given": "Polynomials v1 = x^4, v2 = x^4 + x^3, v3 = x^4 + x^3 + x^2",
+    "required": "Prove {v1, v2, v3} is linearly independent",
+    "formula": "c1*v1 + c2*v2 + c3*v3 = 0 => c1 = c2 = c3 = 0",
+    "solution_steps": [
+      "Consider the linear combination: c1*(x^4) + c2*(x^4 + x^3) + c3*(x^4 + x^3 + x^2) = 0.",
+      "Rearrange terms by descending powers of x: c3*x^2 + (c2 + c3)*x^3 + (c1 + c2 + c3)*x^4 = 0.",
+      "For a polynomial to be identically zero, all its coefficients must equal zero.",
+      "From x^2: c3 = 0.",
+      "From x^3: c2 + c3 = 0 => c2 + 0 = 0 => c2 = 0.",
+      "From x^4: c1 + c2 + c3 = 0 => c1 + 0 + 0 = 0 => c1 = 0.",
+      "Since c1 = c2 = c3 = 0 is the unique solution, the polynomials are linearly independent."
+    ],
+    "hints": [
+      "Set up a linear combination equal to the zero polynomial.",
+      "Group like powers of x.",
+      "Equate each coefficient to zero and solve the triangular system."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 4.3, Definition 4.3.1, Page 43"
+  },
+  {
+    "id": 19,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Vectors and Vector Spaces",
+    "topic": "Basis and Dimension of Subspace",
+    "type": "multi_step",
+    "question": "Let W = {(x, y, z) in R^3 | x + 2y - z = 0}. (a) Verify that W is a subspace of R^3 over R. (b) Find a basis and the dimension of W.",
+    "options": null,
+    "correct_answer": "Basis = {(1, 0, 1), (0, 1, 2)}, dim(W) = 2",
+    "given": "W = {(x, y, z) in R^3 | x + 2y - z = 0}",
+    "required": "(a) Proof that W is a subspace; (b) Basis and dimension of W",
+    "formula": "z = x + 2y => (x, y, z) = x(1, 0, 1) + y(0, 1, 2)",
+    "solution_steps": [
+      "(a) W is the solution set of a homogeneous linear equation. By Theorem 4.2.1, the solution set of any system of homogeneous linear equations is a subspace of R^n.",
+      "(b) Express z in terms of free variables x and y: z = x + 2y.",
+      "Any vector in W has the form (x, y, x + 2y) = x(1, 0, 1) + y(0, 1, 2).",
+      "The vectors (1, 0, 1) and (0, 1, 2) span W.",
+      "Since neither vector is a scalar multiple of the other, they are linearly independent.",
+      "Thus, a basis for W is {(1, 0, 1), (0, 1, 2)} and dim(W) = 2."
+    ],
+    "hints": [
+      "Express one variable in terms of the other two free variables.",
+      "Decompose the general vector into a linear combination of constant vectors.",
+      "Count the number of basis vectors to determine the dimension."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 4.2 & Section 4.4, Example 4.4.14, Pages 34, 53"
+  },
+  {
+    "id": 20,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Types of Matrices: Diagonal Matrix",
+    "type": "true_false",
+    "question": "If A is a diagonal matrix, then A^t is also a diagonal matrix.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "correct_answer": "True",
+    "given": "A is a diagonal matrix",
+    "required": "Determine if A^t is also diagonal (True/False)",
+    "formula": "a_ij = 0 for all i != j",
+    "solution_steps": [
+      "By definition, a matrix A is diagonal if all off-diagonal entries are zero: a_ij = 0 whenever i != j.",
+      "The transpose A^t has entries (A^t)_ij = a_ji.",
+      "For any off-diagonal position i != j, j != i, which implies a_ji = 0.",
+      "Therefore, (A^t)_ij = 0 for all i != j, meaning A^t = A is also a diagonal matrix."
+    ],
+    "hints": [
+      "Recall the definition of a diagonal matrix.",
+      "What happens to the entries of a diagonal matrix when you transpose it?"
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 2.3, Definition 2.3.3, Page 68"
+  },
+  {
+    "id": 21,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Symmetric and Skew-Symmetric Matrices",
+    "type": "true_false",
+    "question": "For any matrix A if A = A^t, then the matrix is named as symmetric. A matrix obtained by adding A + A^t is skew symmetric matrix (True/False).",
+    "options": [
+      "True",
+      "False"
+    ],
+    "correct_answer": "False",
+    "given": "Matrix A + A^t",
+    "required": "Determine if A + A^t is skew-symmetric",
+    "formula": "(A + A^t)^t = A^t + A = A + A^t",
+    "solution_steps": [
+      "Compute the transpose of (A + A^t): (A + A^t)^t = A^t + (A^t)^t = A^t + A = A + A^t.",
+      "Since the transpose equals the matrix itself, A + A^t is symmetric.",
+      "A skew-symmetric matrix satisfies M^t = -M, which holds for A - A^t, not A + A^t.",
+      "Therefore, the statement is False."
+    ],
+    "hints": [
+      "Apply the transpose operation to (A + A^t).",
+      "Recall the difference between symmetric and skew-symmetric matrices."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 2.3, Example 2.3.8, Page 69"
+  },
+  {
+    "id": 22,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Matrix Operations and Equality",
+    "type": "numerical",
+    "question": "If [x, 1; -1, 3y] - 2[y - 1, 0; 3, 2 - x] = [y, 1; -7, -x], then find x and y.",
+    "options": null,
+    "correct_answer": "x = 1/2, y = 5/6",
+    "given": "Matrix equality [x, 1; -1, 3y] - [2y - 2, 0; 6, 4 - 2x] = [y, 1; -7, -x]",
+    "required": "Values of x and y",
+    "formula": "Equate corresponding entries of equal matrices",
+    "solution_steps": [
+      "Perform scalar multiplication and subtraction on the LHS:",
+      "Entry (1,1): x - 2(y - 1) = x - 2y + 2.",
+      "Entry (2,2): 3y - 2(2 - x) = 3y - 4 + 2x.",
+      "Equate to RHS: x - 2y + 2 = y => x - 3y = -2 (Equation 1).",
+      "Equate (2,2): 2x + 3y - 4 = -x => 3x + 3y = 4 (Equation 2).",
+      "Add Equation 1 and Equation 2: 4x = 2 => x = 1/2.",
+      "Substitute x = 1/2 into Equation 1: 1/2 - 3y = -2 => 3y = 5/2 => y = 5/6."
+    ],
+    "hints": [
+      "Perform the scalar multiplication by 2 on the second matrix.",
+      "Subtract corresponding entries on the left-hand side.",
+      "Set corresponding entries equal to form a system of two linear equations."
+    ],
+    "answer_unit": null,
+    "tolerance": 0.001,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 2.2, Pages 60–61"
+  },
+  {
+    "id": 23,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Inverse of a 2x2 Matrix",
+    "type": "numerical",
+    "question": "The inverse of the matrix A = [2, 3; -1, 4] is ____________________.",
+    "options": null,
+    "correct_answer": "[4/11, -3/11; 1/11, 2/11]",
+    "given": "A = [2, 3; -1, 4]",
+    "required": "A^-1",
+    "formula": "A^-1 = (1/det(A)) * [d, -b; -c, a]",
+    "solution_steps": [
+      "Calculate the determinant: det(A) = (2)(4) - (3)(-1) = 8 + 3 = 11.",
+      "Since det(A) != 0, A is invertible.",
+      "Form the adjoint matrix for 2x2: adj(A) = [4, -3; 1, 2].",
+      "Multiply by 1/det(A): A^-1 = (1/11) * [4, -3; 1, 2] = [4/11, -3/11; 1/11, 2/11]."
+    ],
+    "hints": [
+      "Find the determinant ad - bc.",
+      "Swap diagonal entries and negate off-diagonal entries.",
+      "Divide by the determinant."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 2.4, Example 2.4.8, Page 74"
+  },
+  {
+    "id": 24,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Inverse of a 3x3 Matrix",
+    "type": "multi_step",
+    "question": "Let A = [1, 2, 2; 3, 1, 0; 1, 1, 1], then find the inverse of A, A^-1.",
+    "options": null,
+    "correct_answer": "[-1, 0, 2; 3, 1, -6; -2, -1, 5]",
+    "given": "A = [1, 2, 2; 3, 1, 0; 1, 1, 1]",
+    "required": "A^-1",
+    "formula": "A^-1 = (1/det(A)) * adj(A)",
+    "solution_steps": [
+      "Expand det(A) along row 2: det(A) = -3(2(1) - 2(1)) + 1(1(1) - 2(1)) - 0 = -3(0) + 1(-1) = -1.",
+      "Compute cofactors: C11 = 1, C12 = -3, C13 = 2; C21 = 0, C22 = -1, C23 = 1; C31 = -2, C32 = 6, C33 = -5.",
+      "Form adj(A) = C^t = [1, 0, -2; -3, -1, 6; 2, 1, -5].",
+      "A^-1 = (1/(-1)) * adj(A) = [-1, 0, 2; 3, 1, -6; -2, -1, 5]."
+    ],
+    "hints": [
+      "First evaluate det(A).",
+      "Find all 9 cofactors and take their transpose to obtain adj(A).",
+      "Divide each element of adj(A) by det(A)."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "hard",
+    "citation": "AAU Math 1041 Module, Section 3.3, Theorem 3.3.1, Page 99"
+  },
+  {
+    "id": 25,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Determinant of Triangular Matrix",
+    "type": "numerical",
+    "question": "Evaluate the determinant: |1, 2, 3; 0, -1, 4; 0, 0, 6|.",
+    "options": null,
+    "correct_answer": "-6",
+    "given": "Upper triangular matrix [1, 2, 3; 0, -1, 4; 0, 0, 6]",
+    "required": "Determinant",
+    "formula": "det(A) = a11 * a22 * ... * ann for triangular matrices",
+    "solution_steps": [
+      "Notice that all entries below the main diagonal are zero, so the matrix is upper triangular.",
+      "The determinant of a triangular matrix is the product of its diagonal entries.",
+      "Compute: det = (1) * (-1) * (6) = -6."
+    ],
+    "hints": [
+      "Observe that this is a triangular matrix.",
+      "Multiply the elements along the main diagonal."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Section 3.2, Property 11, Page 96"
+  },
+  {
+    "id": 26,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Properties of Determinants",
+    "type": "numerical",
+    "question": "Let A and B be 4 x 4 matrices such that det(A) = 3. If det(2B A^-1) = 8, then det(B) = ____________________.",
+    "options": null,
+    "correct_answer": "3/2",
+    "given": "A and B are 4x4 matrices, det(A) = 3, det(2B A^-1) = 8",
+    "required": "det(B)",
+    "formula": "det(cM) = c^n * det(M), det(MN) = det(M)*det(N), det(A^-1) = 1/det(A)",
+    "solution_steps": [
+      "Apply the scalar property of determinants for a 4x4 matrix: det(2 * M) = 2^4 * det(M) = 16 * det(M).",
+      "Apply multiplicative property: det(B * A^-1) = det(B) * det(A^-1) = det(B) / det(A).",
+      "Combine: det(2B A^-1) = 16 * (det(B) / det(A)) = 8.",
+      "Substitute det(A) = 3: 16 * (det(B) / 3) = 8.",
+      "Solve for det(B): det(B) = (8 * 3) / 16 = 24 / 16 = 3/2."
+    ],
+    "hints": [
+      "Remember that pulling a scalar c out of an n x n determinant results in c^n.",
+      "Use det(A^-1) = 1/det(A).",
+      "Substitute the known values and solve for det(B)."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 3.2, Property 8 & Property 3, Pages 92–93"
+  },
+  {
+    "id": 27,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Properties of Determinants: Row Operations",
+    "type": "numerical",
+    "question": "If det([a, b, c; d, e, f; g, h, i]) = 3, then evaluate det([5a+d, 10b+2e, 5c+f; g, 2h, i; d, 2e, f]).",
+    "options": null,
+    "correct_answer": "-30",
+    "given": "det([a, b, c; d, e, f; g, h, i]) = 3",
+    "required": "Determinant of the transformed matrix",
+    "formula": "Row/column linearity and row addition invariance",
+    "solution_steps": [
+      "Factor out 2 from column 2: det = 2 * det([5a+d, 5b+e, 5c+f; g, h, i; d, e, f]).",
+      "Subtract row 3 from row 1 (R1 -> R1 - R3): det = 2 * det([5a, 5b, 5c; g, h, i; d, e, f]).",
+      "Factor out 5 from row 1: det = 10 * det([a, b, c; g, h, i; d, e, f]).",
+      "Interchange row 2 and row 3 (R2 <-> R3), multiplying the determinant by -1: det = -10 * det([a, b, c; d, e, f; g, h, i]).",
+      "Substitute original determinant = 3: det = -10 * 3 = -30."
+    ],
+    "hints": [
+      "Notice column 2 has a common factor of 2.",
+      "Use row subtraction to eliminate d, e, f from the first row.",
+      "Check if any rows need to be swapped to match the original matrix."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "hard",
+    "citation": "AAU Math 1041 Module, Section 3.2, Pages 94–96"
+  },
+  {
+    "id": 28,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Rank of a Matrix",
+    "type": "numerical",
+    "question": "The rank of matrix A = [4, 1, 3; 2, 1, 4; 0, 1, 5] is ____________________.",
+    "options": null,
+    "correct_answer": "2",
+    "given": "A = [4, 1, 3; 2, 1, 4; 0, 1, 5]",
+    "required": "Rank of A",
+    "formula": "Number of non-zero rows in row echelon form",
+    "solution_steps": [
+      "Perform row operation R2 -> 2*R2 - R1: 2(2, 1, 4) - (4, 1, 3) = (0, 1, 5).",
+      "The matrix becomes [4, 1, 3; 0, 1, 5; 0, 1, 5].",
+      "Perform R3 -> R3 - R2: [4, 1, 3; 0, 1, 5; 0, 0, 0].",
+      "There are 2 non-zero rows in the row echelon form.",
+      "Therefore, rank(A) = 2."
+    ],
+    "hints": [
+      "Apply elementary row operations to reduce the matrix to row echelon form.",
+      "Count the number of non-zero rows."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 2.5, Definition 2.5.1, Page 77"
+  },
+  {
+    "id": 29,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Gaussian Elimination",
+    "type": "multi_step",
+    "question": "Consider the following system of linear equations: 5x1 - 2x2 + x3 = 9; -2x1 + 10x2 + 2x3 = 8; x1 + 2x2 - 5x3 = -1. (a) Transform the augmented matrix of the system to row echelon form. (b) Find the rank of the augmented matrix. (c) Solve the system by Gaussian elimination method.",
+    "options": null,
+    "correct_answer": "(a) Row echelon form reached; (b) Rank = 3; (c) x1 = 2, x2 = 1, x3 = 1",
+    "given": "System of 3 equations in 3 variables",
+    "required": "Row echelon form, rank, and solution",
+    "formula": "Ax = b",
+    "solution_steps": [
+      "Augmented matrix: [5, -2, 1 | 9; -2, 10, 2 | 8; 1, 2, -5 | -1].",
+      "Swap R1 <-> R3: [1, 2, -5 | -1; -2, 10, 2 | 8; 5, -2, 1 | 9].",
+      "R2 -> R2 + 2*R1: [0, 14, -8 | 6] -> divide by 2: [0, 7, -4 | 3].",
+      "R3 -> R3 - 5*R1: [0, -12, 26 | 14] -> divide by 2: [0, -6, 13 | 7].",
+      "R3 -> 7*R3 + 6*R2: [0, 0, 67 | 67] => R3 -> [0, 0, 1 | 1].",
+      "Rank of augmented matrix is 3.",
+      "Back substitution: x3 = 1; 7*x2 - 4(1) = 3 => x2 = 1; x1 + 2(1) - 5(1) = -1 => x1 = 2."
+    ],
+    "hints": [
+      "Swap rows to put a leading 1 in the top-left position.",
+      "Use row operations to create zeros below the leading 1s.",
+      "Use back substitution to solve for each variable."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "hard",
+    "citation": "AAU Math 1041 Module, Section 2.6, Pages 80–81"
+  },
+  {
+    "id": 30,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Cramer's Rule",
+    "type": "multi_step",
+    "question": "Solve the following system of linear equations by using Cramer's rule: x1 + x2 + x3 = 2; x1 + 2x2 + x3 = 2; x1 + 3x2 - x3 = -1.",
+    "options": null,
+    "correct_answer": "x1 = 3/2, x2 = 0, x3 = 1/2",
+    "given": "System of 3 equations: x1 + x2 + x3 = 2, x1 + 2x2 + x3 = 2, x1 + 3x2 - x3 = -1",
+    "required": "Values of x1, x2, x3 using Cramer's Rule",
+    "formula": "xi = det(Ai) / det(A)",
+    "solution_steps": [
+      "Compute coefficient determinant D = det([1, 1, 1; 1, 2, 1; 1, 3, -1]): R2 - R1 gives row (0, 1, 0), R3 - R1 gives (0, 2, -2). Expanding along R2: -1 * det([1, 1; 1, -2]) = -1(-2 - 1) * (-1)... directly D = -2.",
+      "Compute D1 = det([2, 1, 1; 2, 2, 1; -1, 3, -1]): R2 - R1 gives (0, 1, 0). Expanding: -1 * det([2, 1; -1, -1]) = -1(-2 - (-1)) = -1(-1) = 1... D1 = -3.",
+      "Compute D2 = det([1, 2, 1; 1, 2, 1; 1, -1, -1]) = 0 (since row 1 and row 2 are identical).",
+      "Compute D3 = det([1, 1, 2; 1, 2, 2; 1, 3, -1]) = -1.",
+      "Calculate variables: x1 = D1/D = -3/(-2) = 3/2; x2 = D2/D = 0/(-2) = 0; x3 = D3/D = -1/(-2) = 1/2."
+    ],
+    "hints": [
+      "Compute the determinant of the coefficient matrix D first.",
+      "Construct D1, D2, D3 by replacing columns with the constants column.",
+      "Compute each variable as Di / D."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 3.4, Pages 101–102"
+  },
+  {
+    "id": 31,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Consistency of Linear Systems",
+    "type": "multi_step",
+    "question": "Determine the value(s) of k such that the system of equations 2x + ky - z = -2; x + 2y + kz = 1; x - 3z = -3 has: (i) a unique solution, (ii) no solution, (iii) more than one solution.",
+    "options": null,
+    "correct_answer": "(i) k != 2 and k != -5; (ii) k = -5; (iii) k = 2",
+    "given": "System of 3 equations with parameter k",
+    "required": "Values of k for unique, no, and infinitely many solutions",
+    "formula": "det(A) != 0 for unique solution",
+    "solution_steps": [
+      "Compute det(A) = det([2, k, -1; 1, 2, k; 1, 0, -3]) = 1(k^2 + 2) - 3(4 - k) = k^2 + 3k - 10 = (k + 5)(k - 2).",
+      "(i) The system has a unique solution if det(A) != 0 => k != 2 and k != -5.",
+      "(ii) For k = -5, reducing the augmented matrix leads to the inconsistent equation 0 = 14. Thus, no solution when k = -5.",
+      "(iii) For k = 2, reducing the augmented matrix gives rank(A) = rank([A|b]) = 2 < 3. Thus, infinitely many solutions when k = 2."
+    ],
+    "hints": [
+      "Find the determinant of the coefficient matrix in terms of k.",
+      "Set det(A) = 0 to identify the critical values of k.",
+      "Test each critical value in the augmented matrix to distinguish no solution from infinite solutions."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "hard",
+    "citation": "AAU Math 1041 Module, Section 2.6, Pages 80–84"
+  },
+  {
+    "id": 32,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Eigenvalues and Eigenvectors (2x2)",
+    "type": "multi_step",
+    "question": "Find all the eigenvalues and one corresponding eigenvector for the matrix A = [2, 2; 1, 3].",
+    "options": null,
+    "correct_answer": "lambda1 = 4 with v1 = (1, 1)^t; lambda2 = 1 with v2 = (-2, 1)^t",
+    "given": "A = [2, 2; 1, 3]",
+    "required": "Eigenvalues and corresponding eigenvectors",
+    "formula": "det(A - lambda*I) = 0, (A - lambda*I)v = 0",
+    "solution_steps": [
+      "Characteristic equation: det([2 - lambda, 2; 1, 3 - lambda]) = (2 - lambda)(3 - lambda) - 2 = lambda^2 - 5*lambda + 4 = 0.",
+      "Factor: (lambda - 4)(lambda - 1) = 0 => lambda1 = 4, lambda2 = 1.",
+      "For lambda = 4: [2 - 4, 2; 1, 3 - 4][x; y] = [-2, 2; 1, -1][x; y] = [0; 0] => x = y. Eigenvector: v1 = (1, 1)^t.",
+      "For lambda = 1: [2 - 1, 2; 1, 3 - 1][x; y] = [1, 2; 1, 2][x; y] = [0; 0] => x + 2y = 0 => x = -2y. Eigenvector: v2 = (-2, 1)^t."
+    ],
+    "hints": [
+      "Subtract lambda from the main diagonal and set the determinant to zero.",
+      "Solve the characteristic quadratic polynomial.",
+      "Substitute each lambda back into (A - lambda*I)v = 0."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Section 3.1 & 3.2, Page 88"
+  },
+  {
+    "id": 33,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Matrices, Determinants and Systems of Linear Equations",
+    "topic": "Eigenvalues and Eigenvectors (3x3)",
+    "type": "multi_step",
+    "question": "Find all the eigenvalues and the corresponding eigenvectors to the matrix A = [1, 1, -2; 0, 2, 1; 0, 0, -1].",
+    "options": null,
+    "correct_answer": "lambda = 1 with (1, 0, 0)^t; lambda = 2 with (1, 1, 0)^t; lambda = -1 with (7, -2, 6)^t",
+    "given": "A = [1, 1, -2; 0, 2, 1; 0, 0, -1]",
+    "required": "Eigenvalues and eigenvectors",
+    "formula": "det(A - lambda*I) = 0, (A - lambda*I)v = 0",
+    "solution_steps": [
+      "Since A is upper triangular, its eigenvalues are the diagonal entries: lambda1 = 1, lambda2 = 2, lambda3 = -1.",
+      "For lambda1 = 1: (A - I)v = [0, 1, -2; 0, 1, 1; 0, 0, -2][x; y; z] = 0 => y = 0, z = 0, x is free. Eigenvector: v1 = (1, 0, 0)^t.",
+      "For lambda2 = 2: (A - 2I)v = [-1, 1, -2; 0, 0, 1; 0, 0, -3][x; y; z] = 0 => z = 0, -x + y = 0 => x = y. Eigenvector: v2 = (1, 1, 0)^t.",
+      "For lambda3 = -1: (A + I)v = [2, 1, -2; 0, 3, 1; 0, 0, 0][x; y; z] = 0 => 3y + z = 0 => z = -3y; 2x + y - 2(-3y) = 0 => 2x = -7y. Choosing y = -2 gives x = 7, z = 6. Eigenvector: v3 = (7, -2, 6)^t."
+    ],
+    "hints": [
+      "Use the triangular matrix property to read off eigenvalues directly.",
+      "Solve the homogeneous system (A - lambda*I)v = 0 for each eigenvalue."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "hard",
+    "citation": "AAU Math 1041 Module, Section 2.3 & 3.2, Pages 68, 88"
+  },
+  {
+    "id": 34,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Revision on limits, continuity and differentiation",
+    "topic": "One-Sided Limits and Absolute Value",
+    "type": "numerical",
+    "question": "The value of lim_{x -> -4^+} (1 + |x - 4|) / |x| is ____________________.",
+    "options": null,
+    "correct_answer": "9/4",
+    "given": "Function f(x) = (1 + |x - 4|) / |x| as x -> -4^+",
+    "required": "Limit value",
+    "formula": "Direct substitution after evaluating absolute value signs",
+    "solution_steps": [
+      "Near x = -4, x - 4 is negative, so |x - 4| = -(x - 4). As x -> -4, |x - 4| -> |-8| = 8.",
+      "Near x = -4, x is negative, so |x| = -x. As x -> -4, |x| -> |-4| = 4.",
+      "Substitute values into the expression: (1 + 8) / 4 = 9/4."
+    ],
+    "hints": [
+      "Evaluate the signs of the terms inside the absolute value near x = -4.",
+      "Compute the limit by direct substitution since the denominator is non-zero."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Part II, Section 1.1, Pages 108–109"
+  },
+  {
+    "id": 35,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Revision on limits, continuity and differentiation",
+    "topic": "Limits at Infinity with Radicals",
+    "type": "numerical",
+    "question": "The value of lim_{x -> -infinity} sqrt(x^2 + x + 1) / (x^3 + 2x^2 + x + 1)^(1/3) is ____________________.",
+    "options": null,
+    "correct_answer": "-1",
+    "given": "Limit as x -> -infinity of sqrt(x^2 + x + 1) / cbrt(x^3 + 2x^2 + x + 1)",
+    "required": "Limit value",
+    "formula": "For x < 0, sqrt(x^2) = |x| = -x, and cbrt(x^3) = x",
+    "solution_steps": [
+      "Factor x^2 out of the square root in the numerator: sqrt(x^2 * (1 + 1/x + 1/x^2)) = |x| * sqrt(1 + 1/x + 1/x^2).",
+      "Since x -> -infinity, x < 0, which means |x| = -x.",
+      "Factor x^3 out of the cube root in the denominator: cbrt(x^3 * (1 + 2/x + 1/x^2 + 1/x^3)) = x * cbrt(1 + 2/x + 1/x^2 + 1/x^3).",
+      "Form the ratio: (-x * sqrt(1 + 1/x + 1/x^2)) / (x * cbrt(1 + 2/x + 1/x^2 + 1/x^3)) = -sqrt(1 + 1/x + 1/x^2) / cbrt(1 + 2/x + 1/x^2 + 1/x^3).",
+      "Take the limit as x -> -infinity: -sqrt(1) / cbrt(1) = -1."
+    ],
+    "hints": [
+      "Carefully handle sqrt(x^2) when x is negative.",
+      "Remember that sqrt(x^2) = |x| = -x for negative x.",
+      "Divide numerator and denominator by x."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Part II, Section 1.1, Pages 110–111"
+  },
+  {
+    "id": 36,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Revision on limits, continuity and differentiation",
+    "topic": "Epsilon-Delta Definition of Limit",
+    "type": "proof",
+    "question": "Prove using the (epsilon - delta) definition of limit that lim_{x -> 2} (7x + 3) = 17.",
+    "options": null,
+    "correct_answer": "Proof verified with delta = epsilon / 7",
+    "given": "f(x) = 7x + 3, L = 17, a = 2",
+    "required": "Prove for every epsilon > 0, there exists delta > 0 such that 0 < |x - 2| < delta implies |f(x) - 17| < epsilon",
+    "formula": "0 < |x - a| < delta => |f(x) - L| < epsilon",
+    "solution_steps": [
+      "Let epsilon > 0 be given.",
+      "Analyze |f(x) - L| = |(7x + 3) - 17| = |7x - 14| = 7|x - 2|.",
+      "We require 7|x - 2| < epsilon, which is equivalent to |x - 2| < epsilon / 7.",
+      "Choose delta = epsilon / 7.",
+      "Assume 0 < |x - 2| < delta. Then |(7x + 3) - 17| = 7|x - 2| < 7 * delta = 7 * (epsilon / 7) = epsilon.",
+      "This completes the proof that lim_{x -> 2} (7x + 3) = 17."
+    ],
+    "hints": [
+      "Start with the expression |f(x) - L| and simplify.",
+      "Factor out the coefficient 7.",
+      "Define delta in terms of epsilon."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Part II, Section 1.1, Page 108"
+  },
+  {
+    "id": 37,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Revision on limits, continuity and differentiation",
+    "topic": "Piecewise Continuity",
+    "type": "short_answer",
+    "question": "If f(x) = { 2 if x <= -1; ax + b if -1 < x < 3; -2 if x >= 3 } is continuous on R, then find a and b.",
+    "options": null,
+    "correct_answer": "a = -1, b = 1",
+    "given": "f(x) is piecewise continuous on R",
+    "required": "Values of constants a and b",
+    "formula": "lim_{x -> c^-} f(x) = lim_{x -> c^+} f(x) = f(c)",
+    "solution_steps": [
+      "For continuity at x = -1: lim_{x -> -1^-} f(x) = lim_{x -> -1^+} f(x) => 2 = a(-1) + b => -a + b = 2.",
+      "For continuity at x = 3: lim_{x -> 3^-} f(x) = lim_{x -> 3^+} f(x) => a(3) + b = -2 => 3a + b = -2.",
+      "Subtract the first equation from the second: (3a + b) - (-a + b) = -2 - 2 => 4a = -4 => a = -1.",
+      "Substitute a = -1 into -a + b = 2: -(-1) + b = 2 => 1 + b = 2 => b = 1."
+    ],
+    "hints": [
+      "Enforce left-hand limit = right-hand limit at x = -1.",
+      "Enforce left-hand limit = right-hand limit at x = 3.",
+      "Solve the 2x2 linear system for a and b."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Part II, Section 1.1, Pages 116–117"
+  },
+  {
+    "id": 38,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Revision on limits, continuity and differentiation",
+    "topic": "Removable Discontinuity and Continuity",
+    "type": "short_answer",
+    "question": "Let f(x) = (sqrt(x + c^2) - c) / x for c > 0 and x != 0. Find f(0) so that f is continuous on R.",
+    "options": null,
+    "correct_answer": "1 / (2c)",
+    "given": "f(x) = (sqrt(x + c^2) - c) / x for x != 0 and c > 0",
+    "required": "f(0) such that f is continuous at x = 0",
+    "formula": "f(0) = lim_{x -> 0} f(x)",
+    "solution_steps": [
+      "By definition of continuity, f(0) must equal lim_{x -> 0} (sqrt(x + c^2) - c) / x.",
+      "Direct substitution gives the indeterminate form 0/0. Rationalize the numerator by multiplying by (sqrt(x + c^2) + c):",
+      "((sqrt(x + c^2) - c)(sqrt(x + c^2) + c)) / (x * (sqrt(x + c^2) + c)) = ((x + c^2) - c^2) / (x * (sqrt(x + c^2) + c)) = x / (x * (sqrt(x + c^2) + c)).",
+      "Cancel x for x != 0: 1 / (sqrt(x + c^2) + c).",
+      "Evaluate the limit as x -> 0: 1 / (sqrt(0 + c^2) + c) = 1 / (c + c) = 1 / (2c)."
+    ],
+    "hints": [
+      "For f to be continuous at 0, f(0) must equal the limit as x approaches 0.",
+      "Rationalize the numerator by multiplying by its conjugate.",
+      "Cancel the common factor of x and substitute x = 0."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Part II, Section 1.1, Pages 112, 114"
+  },
+  {
+    "id": 39,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Revision on limits, continuity and differentiation",
+    "topic": "Intermediate Value Theorem",
+    "type": "proof",
+    "question": "Use the Intermediate Value Theorem to show that there exists at least one real root of the polynomial x^3 + 2x = x^2 + 1 between (0, 1).",
+    "options": null,
+    "correct_answer": "Root exists on (0, 1) by IVT",
+    "given": "Equation x^3 + 2x = x^2 + 1 on the interval (0, 1)",
+    "required": "Prove existence of a root in (0, 1)",
+    "formula": "If g is continuous on [a, b] and g(a)*g(b) < 0, then there exists c in (a, b) with g(c) = 0",
+    "solution_steps": [
+      "Rewrite the equation as g(x) = x^3 - x^2 + 2x - 1 = 0.",
+      "Since g(x) is a polynomial, it is continuous on the closed interval [0, 1].",
+      "Evaluate at endpoint x = 0: g(0) = 0^3 - 0^2 + 2(0) - 1 = -1 < 0.",
+      "Evaluate at endpoint x = 1: g(1) = 1^3 - 1^2 + 2(1) - 1 = 1 > 0.",
+      "Since g(0) and g(1) have opposite signs (g(0) < 0 < g(1)), by the Intermediate Value Theorem, there exists at least one number c in (0, 1) such that g(c) = 0.",
+      "Hence, c^3 + 2c = c^2 + 1, proving that the equation has at least one real root in (0, 1)."
+    ],
+    "hints": [
+      "Move all terms to one side to define a continuous function g(x).",
+      "Evaluate g(0) and g(1).",
+      "Apply the Intermediate Value Theorem based on the sign change."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "easy",
+    "citation": "AAU Math 1041 Module, Part II, Section 1.2, Pages 118–119"
+  },
+  {
+    "id": 40,
+    "subject": "Applied Mathematics I",
+    "exam_type": "Midterm",
+    "chapter": "Revision on limits, continuity and differentiation",
+    "topic": "Implicit Differentiation and Tangent/Normal Lines",
+    "type": "multi_step",
+    "question": "Find equations of the tangent line and the normal line to the curve y*cos(x) = y^2*e^x - 2 at the point (0, 2).",
+    "options": null,
+    "correct_answer": "Tangent line: y = (-4/3)x + 2; Normal line: y = (3/4)x + 2",
+    "given": "Curve: y*cos(x) = y^2*e^x - 2, point P(0, 2)",
+    "required": "Equations of tangent line and normal line at P",
+    "formula": "y - y0 = m(x - x0), m_normal = -1/m_tangent",
+    "solution_steps": [
+      "Differentiate both sides with respect to x using product and chain rules:",
+      "d/dx[y*cos(x)] = y'*cos(x) - y*sin(x).",
+      "d/dx[y^2*e^x - 2] = 2y*y'*e^x + y^2*e^x.",
+      "Equate derivatives: y'*cos(x) - y*sin(x) = 2y*y'*e^x + y^2*e^x.",
+      "Substitute the point (x, y) = (0, 2): y'*cos(0) - 2*sin(0) = 2(2)*y'*e^0 + (2^2)*e^0 => y'(1) - 0 = 4y'(1) + 4.",
+      "Solve for y': y' - 4y' = 4 => -3y' = 4 => y' = -4/3. Thus, tangent slope m = -4/3.",
+      "Equation of tangent line: y - 2 = (-4/3)(x - 0) => y = (-4/3)x + 2.",
+      "Slope of normal line is m_perp = -1 / (-4/3) = 3/4.",
+      "Equation of normal line: y - 2 = (3/4)(x - 0) => y = (3/4)x + 2."
+    ],
+    "hints": [
+      "Differentiate implicitly using the product rule on both sides.",
+      "Substitute x = 0 and y = 2 immediately to solve for dy/dx.",
+      "Use point-slope form for both the tangent line and its perpendicular normal line."
+    ],
+    "answer_unit": null,
+    "tolerance": null,
+    "diagram_reference": null,
+    "difficulty": "medium",
+    "citation": "AAU Math 1041 Module, Part II, Section 1.3, Pages 142–144"
+  }
+];
+loadLevel(0);
+
+function setMode(newMode) {
+  mode = newMode;
+  loadLevel(currentLevel);
+}
+
+function loadLevel(lvl) {
+  currentLevel = lvl;
+  const start = lvl * QUESTIONS_PER_LEVEL;
+  const levelQuestions = questions.slice(start, start + QUESTIONS_PER_LEVEL);
+  
+  document.getElementById('level-header').innerHTML = 
+    `<h2>Level ${lvl + 1} (${mode === 'guided' ? 'Guided Mode' : 'Exam Simulation'})</h2>`;
+  
+  const container = document.getElementById('quiz-area');
+  container.innerHTML = '';
+  document.getElementById('result-area').innerHTML = '';
+
+  levelQuestions.forEach((q, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <p><strong>Q${idx + 1} (${q.type}):</strong> ${q.question}</p>
+      <input type="text" id="ans-${idx}" placeholder="Enter your answer...">
+      ${mode === 'guided' ? `
+        <button class="secondary-btn" style="margin-top:8px;" onclick="toggleHints(${idx})">💡 Hint</button>
+        <div class="hint-box" id="hint-${idx}">
+          ${(q.hints || []).map(h => `<p>• ${h}</p>`).join('')}
+        </div>
+      ` : ''}
+      <div class="solution-box" id="sol-${idx}">
+        <strong>Answer:</strong> ${q.correct_answer}<br>
+        <strong>Steps:</strong><br>${(q.solution_steps || []).join('<br>')}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  document.getElementById('submit-btn').style.display = 'block';
+}
+
+function toggleHints(idx) {
+  const el = document.getElementById(`hint-${idx}`);
+  el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+}
+
+function evaluateLevel() {
+  const start = currentLevel * QUESTIONS_PER_LEVEL;
+  const levelQuestions = questions.slice(start, start + QUESTIONS_PER_LEVEL);
+  let correct = 0;
+
+  levelQuestions.forEach((q, idx) => {
+    const sol = document.getElementById(`sol-${idx}`);
+    sol.style.display = 'block'; // Reveal solutions
+    const userVal = document.getElementById(`ans-${idx}`).value.trim().toLowerCase();
+    const correctVal = String(q.correct_answer).trim().toLowerCase();
+
+    if (userVal.length > 0 && correctVal.includes(userVal)) {
+      correct++;
+    }
+  });
+
+  const percentage = (correct / levelQuestions.length) * 100;
+  const passed = percentage >= 80;
+
+  document.getElementById('result-area').innerHTML = `
+    <div class="score-badge">
+      Score: ${correct} / ${levelQuestions.length} (${percentage.toFixed(0)}%)
+      <br>
+      ${passed ? "✅ Passed (>= 80%)! You unlocked the next level." : "❌ Not Passed (< 80%). Review the steps and try again."}
+    </div>
+    ${passed && (currentLevel + 1) * QUESTIONS_PER_LEVEL < questions.length 
+      ? `<button style="margin-top:15px;" onclick="loadLevel(${currentLevel + 1})">Next Level ➔</button>` 
+      : ''}
+  `;
+}
+</script>
+</body>
+</html>
